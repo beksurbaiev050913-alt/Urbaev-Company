@@ -173,7 +173,8 @@
   <script>
     const API_KEY = prompt("AIzaSyBSw9dyfjEbB_wj0meyRIIFKDXYgH--Hk0");
     const MODEL_URL =
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + encodeURIComponent(API_KEY || "");
+      const MODEL_URL =
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=" + encodeURIComponent(API_KEY || "");
 
     const chat = document.getElementById("chat");
     const input = document.getElementById("input");
