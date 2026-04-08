@@ -4,11 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Urbaev AI 💜</title>
+
 <style>
 body{
   margin:0;
-  font-family:Arial,sans-serif;
-  color:#fff;
+  font-family:Arial;
+  color:white;
   background:linear-gradient(135deg,#7b2ff7,#a64dff,#5f6fff);
   background-size:300% 300%;
   animation:bgMove 10s ease infinite;
@@ -22,60 +23,51 @@ header{
   text-align:center;
   padding:20px;
   font-size:22px;
-  background:rgba(0,0,0,0.25);
+  background:rgba(0,0,0,0.3);
 }
 #chat{
   height:70vh;
   overflow-y:auto;
-  padding:12px;
+  padding:10px;
 }
 .msg{
   margin:10px;
-  padding:12px 14px;
-  border-radius:16px;
+  padding:12px;
+  border-radius:15px;
   max-width:70%;
-  white-space:pre-wrap;
-  word-wrap:break-word;
 }
 .user{
   background:linear-gradient(45deg,#ff00cc,#7b2ff7);
   margin-left:auto;
 }
 .bot{
-  background:rgba(255,255,255,0.12);
+  background:rgba(255,255,255,0.1);
 }
 #inputBox{
   display:flex;
-  gap:10px;
   padding:10px;
-  background:rgba(0,0,0,0.25);
+  background:rgba(0,0,0,0.3);
 }
-#input{
+input{
   flex:1;
   padding:12px;
   border:none;
   border-radius:10px;
-  background:rgba(255,255,255,0.12);
-  color:#fff;
-  outline:none;
-}
-#input::placeholder{
-  color:rgba(255,255,255,0.65);
+  background:rgba(255,255,255,0.1);
+  color:white;
 }
 button{
-  padding:12px 18px;
+  margin-left:10px;
+  padding:12px;
   border:none;
   border-radius:10px;
   background:linear-gradient(45deg,#ff00cc,#7b2ff7);
-  color:#fff;
+  color:white;
   cursor:pointer;
-}
-button:disabled{
-  opacity:0.7;
-  cursor:not-allowed;
 }
 </style>
 </head>
+
 <body>
 
 <header>💜 Urbaev AI</header>
@@ -84,94 +76,91 @@ button:disabled{
 
 <div id="inputBox">
   <input id="input" placeholder="Напиши что-нибудь..." />
-  <button id="sendBtn">Спросить</button>
+  <button onclick="send()">Спросить</button>
 </div>
 
 <script>
+
+// 🔑 КЛЮЧ (сохраняется)
 let API_KEY = localStorage.getItem("api_key");
 
 if (!API_KEY) {
-  API_KEY = prompt(AIzaSyBC9be5J1qj4Tjf7k3B3qAWxCFY1gFMBDQ);
+  API_KEY = prompt("AIzaSyD3P7VxdwRZNud6SjPdJBWHxYgGDR2DN9U");
   if (API_KEY) {
     localStorage.setItem("api_key", API_KEY);
   }
 }
 
-const MODEL = "gemini-3-flash-preview";
-const URL = "https://generativelanguage.googleapis.com/v1beta/models/" +
-  MODEL + ":generateContent?key=" + encodeURIComponent(API_KEY || "");
+// ⚙️ МОДЕЛЬ (стабильная)
+const MODEL = "gemini-1.5-flash";
 
-const chat = document.getElementById("chat");
-const input = document.getElementById("input");
-const sendBtn = document.getElementById("sendBtn");
+const URL = "https://generativelanguage.googleapis.com/v1beta/models/" 
++ MODEL + ":generateContent?key=" + encodeURIComponent(API_KEY || "");
 
-function addMessage(text, type) {
-  const div = document.createElement("div");
-  div.className = "msg " + type;
-  div.innerText = text;
-  chat.appendChild(div);
-  div.scrollIntoView({ behavior: "smooth", block: "end" });
+// 💬 сообщение
+function addMessage(text,type){
+  const div=document.createElement("div");
+  div.className="msg "+type;
+  div.innerText=text;
+  document.getElementById("chat").appendChild(div);
+  div.scrollIntoView();
   return div;
 }
 
-async function send() {
-  const text = input.value.trim();
-  if (!text) return;
+// 🚀 отправка
+async function send(){
+  const input=document.getElementById("input");
+  const text=input.value.trim();
 
-  if (!API_KEY) {
-    addMessage("Сначала вставь API key и обнови страницу.", "bot");
+  if(!text)return;
+
+  if(!API_KEY){
+    addMessage("Вставь API ключ и обнови страницу","bot");
     return;
   }
 
-  addMessage(text, "user");
-  input.value = "";
+  addMessage(text,"user");
+  input.value="";
 
-  const loading = addMessage("🤖 Думаю...", "bot");
-  sendBtn.disabled = true;
+  const loading=addMessage("🤖 Думаю...","bot");
 
-  try {
-    const res = await fetch(URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
+  try{
+    const res=await fetch(URL,{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
       },
-      body: JSON.stringify({
-        contents: [
+      body:JSON.stringify({
+        contents:[
           {
-            parts: [
-              { text: text }
-            ]
+            parts:[{text:text}]
           }
         ]
       })
     });
 
-    const data = await res.json();
+    const data=await res.json();
     loading.remove();
 
-    if (!res.ok) {
-      addMessage("Ошибка: " + (data.error?.message || "что-то пошло не так"), "bot");
+    if(!res.ok){
+      addMessage("Ошибка: "+(data.error?.message||"что-то пошло не так"),"bot");
       return;
     }
 
-    const answer = data.candidates?.[0]?.content?.parts
-      ?.map(part => part.text || "")
-      .join("")
-      .trim();
+    const answer=data.candidates?.[0]?.content?.parts?.[0]?.text;
+    addMessage(answer||"Нет ответа","bot");
 
-    addMessage(answer || "Ответ пустой.", "bot");
-  } catch (err) {
+  }catch(e){
     loading.remove();
-    addMessage("Ошибка сети: " + err.message, "bot");
-  } finally {
-    sendBtn.disabled = false;
+    addMessage("Ошибка сети","bot");
   }
 }
 
-sendBtn.addEventListener("click", send);
-input.addEventListener("keydown", function(e) {
-  if (e.key === "Enter") send();
+// ENTER
+document.getElementById("input").addEventListener("keydown",e=>{
+  if(e.key==="Enter")send();
 });
+
 </script>
 
 </body>
