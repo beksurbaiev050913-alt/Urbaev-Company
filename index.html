@@ -76,42 +76,38 @@ button{
 
 <div id="inputBox">
   <input id="input" placeholder="Напиши что-нибудь..." />
-  <button onclick="send()">Спросить</button>
+  <button id="sendBtn">Спросить</button>
 </div>
 
 <script>
 
-// 🔑 КЛЮЧ (сохраняется)
-let API_KEY = localStorage.getItem("api_key");
+// 🔑 ключ (сохраняется)
+let API_KEY = localStorage.getItem("openrouter_key");
 
 if (!API_KEY) {
-  API_KEY = prompt(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);
+  API_KEY = prompt("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");
   if (API_KEY) {
-    localStorage.setItem("api_key", API_KEY);
+    localStorage.setItem("openrouter_key", API_KEY);
   }
 }
 
-// ⚙️ МОДЕЛЬ (стабильная)
-const MODEL = "gemini-3-flash-preview";
+const chat = document.getElementById("chat");
+const input = document.getElementById("input");
+const sendBtn = document.getElementById("sendBtn");
 
-const URL = "https://generativelanguage.googleapis.com/v1beta/models/" 
-+ MODEL + ":generateContent?key=" + encodeURIComponent(API_KEY || "");
-
-// 💬 сообщение
-function addMessage(text,type){
+// 💬 добавление сообщения
+function addMessage(text, type){
   const div=document.createElement("div");
   div.className="msg "+type;
   div.innerText=text;
-  document.getElementById("chat").appendChild(div);
+  chat.appendChild(div);
   div.scrollIntoView();
   return div;
 }
 
 // 🚀 отправка
 async function send(){
-  const input=document.getElementById("input");
   const text=input.value.trim();
-
   if(!text)return;
 
   if(!API_KEY){
@@ -125,16 +121,16 @@ async function send(){
   const loading=addMessage("🤖 Думаю...","bot");
 
   try{
-    const res=await fetch(URL,{
+    const res=await fetch("https://openrouter.ai/api/v1/chat/completions",{
       method:"POST",
       headers:{
+        "Authorization":"Bearer "+API_KEY,
         "Content-Type":"application/json"
       },
       body:JSON.stringify({
-        contents:[
-          {
-            parts:[{text:text}]
-          }
+        model:"openai/gpt-3.5-turbo",
+        messages:[
+          {role:"user",content:text}
         ]
       })
     });
@@ -147,7 +143,7 @@ async function send(){
       return;
     }
 
-    const answer=data.candidates?.[0]?.content?.parts?.[0]?.text;
+    const answer=data.choices?.[0]?.message?.content;
     addMessage(answer||"Нет ответа","bot");
 
   }catch(e){
@@ -156,8 +152,11 @@ async function send(){
   }
 }
 
-// ENTER
-document.getElementById("input").addEventListener("keydown",e=>{
+// кнопка
+sendBtn.onclick=send;
+
+// enter
+input.addEventListener("keydown",e=>{
   if(e.key==="Enter")send();
 });
 
