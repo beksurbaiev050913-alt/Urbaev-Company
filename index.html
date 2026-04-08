@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Urbaev AI 💜</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     html, body {
       margin: 0;
@@ -15,10 +13,10 @@
       height: 100%;
       font-family: Arial, sans-serif;
       color: white;
-      overflow: hidden;
     }
 
     body {
+      overflow: hidden;
       background: linear-gradient(135deg, #7b2ff7, #a64dff, #5f6fff);
       background-size: 300% 300%;
       animation: bgMove 10s ease infinite;
@@ -118,21 +116,11 @@
       cursor: pointer;
       background: linear-gradient(90deg, #ff00b7, #ff4dff);
       box-shadow: 0 0 16px rgba(255, 0, 200, 0.35);
-      transition: transform 0.15s ease, opacity 0.15s ease;
+      transition: transform 0.15s ease;
     }
 
-    button:hover {
-      transform: scale(1.03);
-    }
-
-    button:active {
-      transform: scale(0.98);
-    }
-
-    .typing {
-      display: inline-block;
-      opacity: 0.9;
-    }
+    button:hover { transform: scale(1.03); }
+    button:active { transform: scale(0.98); }
 
     .hint {
       text-align: center;
@@ -142,17 +130,9 @@
     }
 
     @media (max-width: 700px) {
-      .msg {
-        max-width: 88%;
-      }
-
-      header {
-        font-size: 21px;
-      }
-
-      button {
-        min-width: 90px;
-      }
+      .msg { max-width: 88%; }
+      header { font-size: 21px; }
+      button { min-width: 90px; }
     }
   </style>
 </head>
@@ -167,17 +147,21 @@
 
   <div class="input-wrap">
     <input id="input" type="text" placeholder="Напиши что-нибудь..." />
-    <button onclick="send()">Спросить</button>
+    <button id="sendBtn" type="button">Спросить</button>
   </div>
 
   <script>
     const API_KEY = prompt("AIzaSyBSw9dyfjEbB_wj0meyRIIFKDXYgH--Hk0");
+    const MODEL = "gemini-3-flash-preview";
     const MODEL_URL =
-      const MODEL_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=" + encodeURIComponent(API_KEY || "");
+      "https://generativelanguage.googleapis.com/v1beta/models/" +
+      MODEL +
+      ":generateContent?key=" +
+      encodeURIComponent(API_KEY || "");
 
     const chat = document.getElementById("chat");
     const input = document.getElementById("input");
+    const sendBtn = document.getElementById("sendBtn");
 
     function addMessage(text, type) {
       const div = document.createElement("div");
@@ -188,7 +172,7 @@
       return div;
     }
 
-    async function send() {
+    async function sendMessage() {
       const text = input.value.trim();
       if (!text) return;
 
@@ -197,13 +181,16 @@
         return;
       }
 
-      const hint = chat.querySelector(".hint");
+      const hint = document.querySelector(".hint");
       if (hint) hint.remove();
 
       addMessage(text, "user");
       input.value = "";
+      input.focus();
 
       const loadingMsg = addMessage("🤖 Думаю...", "bot");
+      sendBtn.disabled = true;
+      sendBtn.textContent = "Ждём...";
 
       try {
         const response = await fetch(MODEL_URL, {
@@ -231,21 +218,23 @@
         }
 
         const answer =
-          data.candidates?.[0]?.content?.parts
-            ?.map(part => part.text || "")
-            .join("")
-            .trim();
+          data.candidates?.[0]?.content?.parts?.map(p => p.text || "").join("").trim();
 
         addMessage(answer || "Ответ пустой.", "bot");
       } catch (error) {
         loadingMsg.remove();
         addMessage("Ошибка сети: " + error.message, "bot");
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.textContent = "Спросить";
       }
     }
 
+    sendBtn.addEventListener("click", sendMessage);
+
     input.addEventListener("keydown", function (e) {
       if (e.key === "Enter") {
-        send();
+        sendMessage();
       }
     });
   </script>
