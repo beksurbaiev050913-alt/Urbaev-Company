@@ -85,12 +85,11 @@ button{
 let API_KEY = localStorage.getItem("openrouter_key");
 
 if (!API_KEY) {
-  API_KEY = prompt("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");
+  API_KEY = prompt("Вставь OpenRouter API key:");
   if (API_KEY) {
     localStorage.setItem("openrouter_key", API_KEY);
   }
 }
-
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");
 const sendBtn = document.getElementById("sendBtn");
